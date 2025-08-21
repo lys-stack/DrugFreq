@@ -72,7 +72,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    ideal_kernel_df, ideal_kernel_values = read_csv_with_labels('./Data/Frequency_664/Drug-Side_Effect_Frequency664_2.csv')
+    ideal_kernel_df, ideal_kernel_values = read_csv_with_labels('./Data/Frequency_664/Drug-Side_Effect_Frequency664.csv')
 
     drug_similarity_matrices = [
         read_csv_with_labels("./Data/drug/664_drug_drug_scores.csv")[1],
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         # 特征融合
         fused_drug_sim = perform_feature_fusion(
             np.arange(ideal_kernel_values_masked.shape[0]), drug_similarity_matrices, ideal_kernel_drugs, lambd=0.8,
-            matrix_type='DSE_drug'
+            matrix_type='drug'
         )
 
         fused_side_sim = perform_feature_fusion(

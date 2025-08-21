@@ -80,19 +80,15 @@ class GEncoder(nn.Module, ABC):
 
 
 
-
-
-
 # GCN 解码器类
 class GDecoder(nn.Module, ABC):
-    def __init__(self, gamma):#gamma: 一个超参数，用于控制尺度调整，用于后续sigmoid函数的输入
+    def __init__(self, gamma):
         super(GDecoder, self).__init__()
         self.gamma = gamma
 
     def forward(self, drug_emb, side_emb):
         Corr = torch_corr_x_y(drug_emb, side_emb)#计算两个矩阵之间的相关性
         output = scale_sigmoid2(Corr, alpha=self.gamma)
-        # output = (output >= 0.5).float()
         return output
 
 
@@ -142,9 +138,6 @@ class Optimizer(nn.Module, ABC):
             true_data_label = torch.where(true_data > 0, torch.tensor(1, device=true_data.device), true_data)
             best_auc = 0
             best_aupr = 0
-            # best_rmse = float('inf')
-            # best_mae = float('inf')
-            # print(epoch.item())
             predict_data = self.model()
             loss = binary_cross_entropy_loss(self.train_data, predict_data, self.train_mask)
             self.optimizer.zero_grad()
@@ -161,11 +154,6 @@ class Optimizer(nn.Module, ABC):
         with torch.no_grad():
             self.model.eval()
             predict_data = self.model()
-            # print(self.test_mask)
-            # print(self.test_mask.sum())  # 查看 `test_mask` 中有多少个 True 或 1
-            # print(self.adj)
-            # print(self.adj[self.test_mask])  # 打印 `test_mask` 对应的 `adj` 的元素？
-            # 确保 test_mask 是布尔类型
             self.test_mask = self.test_mask.bool()
 
             # 获取掩码为 True 的位置索引
@@ -186,26 +174,11 @@ class Optimizer(nn.Module, ABC):
             # 计算评估指标
             auc1 = self.ap_fun(true_data_label, predict_data_masked)
             aupr = self.aupr_fun(true_data_label, predict_data_masked)
-            # non_zero_indices = torch.nonzero(true_test_data, as_tuple=True)  # 获取所有非零标签的索引
-            # # non_zero_indices = torch.nonzero(true_data, as_tuple=False).squeeze()
-            #
-            #
-            # filtered_true_data = true_test_data[non_zero_indices]  # 只选择非零标签
-            # filtered_predict_data = predict_data_masked[non_zero_indices]  # 对应选择预测结果中的相同部分
-            # rmse = self.rmse_fun(filtered_true_data, filtered_predict_data)
-            # mae = self.mae_fun(filtered_true_data, filtered_predict_data)
-
-
-            # print(f"Final Evaluation - AUC: {auc1:.4f}, AUPR: {aupr:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
             print(f"Final Evaluation - AUC: {auc1:.4f}, AUPR: {aupr:.4f}")
 
             # 保存最佳结果
             best_auc = auc1
             best_aupr = aupr
-            # best_rmse = rmse
-            # best_mae = mae
             best_predict = predict_data_masked
         print("Fit finished.")
-
-        # return true_test_data, best_predict, best_auc, best_aupr, best_rmse, best_mae
         return true_test_data, best_predict, best_auc, best_aupr

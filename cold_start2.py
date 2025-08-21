@@ -94,7 +94,7 @@ if __name__ == "__main__":
         # 特征融合
         fused_drug_sim = perform_feature_fusion(
             np.arange(ideal_kernel_values_masked.shape[0]), drug_similarity_matrices, ideal_kernel_drugs, lambd=0.8,
-            matrix_type='DSE_drug'
+            matrix_type='drug'
         )
 
         fused_side_sim = perform_feature_fusion(

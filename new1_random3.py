@@ -68,19 +68,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    ideal_kernel_df, ideal_kernel_values = read_csv_with_labels('./Data/Frequency_750/Drug-Side_Effect_Frequency664_2.csv')
+    ideal_kernel_df, ideal_kernel_values = read_csv_with_labels('./Data/Frequency_664/Drug-Side_Effect_Frequency664.csv')
 
     drug_similarity_matrices = [
-        read_csv_with_labels("./Data/drug/664_drug_drug_scores2.csv")[1],
-        read_csv_with_labels("./Data/drug/664_drug_fingerprint_jaccard_similarity_matrix_new2.csv")[1],
-        read_csv_with_labels("./Data/drug/664_drug_disease_jaccard_matrix2.csv")[1]
+        read_csv_with_labels("./Data/drug/664_drug_drug_scores.csv")[1],
+        read_csv_with_labels("./Data/drug/664_drug_fingerprint_jaccard_similarity_matrix_new.csv")[1],
+        read_csv_with_labels("./Data/drug/664_drug_disease_jaccard_matrix.csv")[1]
     ]
 
     # 读取副作用相似性矩阵
     side_similarity_matrices = [
-        read_csv_with_labels("./Data/side/kvplm_Side_Effect_Similarity_Matrix2.csv")[1],
-        read_csv_with_labels("./Data/side/semantic2.csv")[1],
-        read_csv_with_labels("./Data/side/word_new2.csv")[1]
+        read_csv_with_labels("./Data/side/kvplm_Side_Effect_Similarity_Matrix.csv")[1],
+        read_csv_with_labels("./Data/side/semantic.csv")[1],
+        read_csv_with_labels("./Data/side/word_new.csv")[1]
     ]
 
     # 生成掩码矩阵
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         # 特征融合
         fused_drug_sim = perform_feature_fusion(
             np.arange(ideal_kernel_values_masked.shape[0]), drug_similarity_matrices, ideal_kernel_drugs, lambd=0.8,
-            matrix_type='DSE_drug'
+            matrix_type='drug'
         )
 
         fused_side_sim = perform_feature_fusion(

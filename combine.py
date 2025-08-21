@@ -15,23 +15,6 @@ def kernel_normalized(k):#对核矩阵进行标准化
     k_nor = k / (np.dot(diag, diag.T))#对角线元素的平方根作为每个元素的标准差，除以对角线元素的平方根
     return k_nor#返回标准化后的核矩阵
 
-# def get_CKA_Wi(P, q, G, h, A, b):#使用二次规划求解器计算特定权重
-#     """
-#     :param P:二次项系数矩阵
-#     :param q: 一次性项系数向量
-#     :param G: 不等式约束矩阵
-#     :param h: 不等式约束的右侧值
-#     :param A: 等式约束矩阵
-#     :param b: 等式约束的右侧值
-#     :return:
-#     """
-#     P = matrix(P)
-#     G = matrix(G)
-#     h = matrix(h)
-#     A = matrix(A)
-#     sol = solvers.qp(P, q, G, h, A, b)#求解线性规划问题
-#     return np.array(sol['x']).flatten()#将求解结果中的x转换为numpy数组展平并返回
-
 def get_CKA_Wi(P, q, G, h, A, b):
     # 如果是 numpy 数组则转换；否则保留为 cvxopt.matrix
     P = matrix(P) if not isinstance(P, matrix) else P
@@ -121,83 +104,16 @@ def read_csv_with_labels(file_path):
     return df, values
 
 
-
-# def perform_feature_fusion(train_indices, similarity_matrices, ideal_kernel_values, lambd=0.8, matrix_type='DSE_drug'):
-#     """
-#     Perform feature fusion (CKA-MKL) for a given set of similarity matrices based on the training indices.
-#
-#     Parameters:
-#     - train_indices (list of int): Indices of the training samples (药物或副作用索引，已减去标签偏移)。
-#     - similarity_matrices (list of numpy arrays): List of similarity matrices to be fused。
-#     - ideal_kernel_values (numpy array): Ideal kernel matrix for fusion。
-#     - lambd (float): Regularization parameter。
-#     - matrix_type (str): "DSE_drug" 表示药物相似度矩阵，"side" 表示副作用相似度矩阵。
-#
-#     Returns:
-#     - fused_sim (numpy array): Fused similarity matrix。
-#     """
-#     print(f"Performing feature fusion for {len(train_indices)} indices")
-#     print(f"Ideal kernel shape: {ideal_kernel_values.shape}")
-#     print(f"Train indices: {train_indices[:5]} ...")  # 打印前5个索引
-#
-#     # 检查并过滤掉超过矩阵大小的非法索引
-#     if matrix_type == 'DSE_drug':
-#         max_size = ideal_kernel_values.shape[0]  # 药物维度是750
-#     else:
-#         max_size = ideal_kernel_values.shape[1]  # 副作用维度是994
-#
-#     valid_train_indices = [i for i in train_indices if i < max_size]
-#
-#     if len(valid_train_indices) != len(train_indices):
-#         print(f"Warning: {len(train_indices) - len(valid_train_indices)} indices were out of bounds and removed.")
-#
-#     # 使用合法的训练集索引计算理想核
-#     train_ideal_kernel = ideal_kernel_values[np.ix_(valid_train_indices, valid_train_indices)]
-#     print(f"train_ideal_kernel shape: {train_ideal_kernel.shape}")  # 应为合法大小
-#     train_ideal_kernel = np.dot(train_ideal_kernel, train_ideal_kernel.T)
-#     train_ideal_kernel = kernel_normalized(train_ideal_kernel)
-#     print(f"Normalized train_ideal_kernel shape: {train_ideal_kernel.shape}")
-#
-#     # 提取合法的训练集对应的相似度矩阵
-#     train_similarity = [m[np.ix_(valid_train_indices, valid_train_indices)] for m in similarity_matrices]
-#     print(f"Number of similarity matrices: {len(train_similarity)}")
-#     for idx, sim in enumerate(train_similarity):
-#         print(f"Similarity matrix {idx} shape: {sim.shape}")
-#
-#     # 计算核权重
-#     weights = get_n_weight(train_similarity, train_ideal_kernel, lambd=lambd)
-#     print(f"Kernel weights: {weights}")
-#
-#     # 合并相似度矩阵
-#     fused_sim = np.zeros_like(similarity_matrices[0])
-#     for i in range(len(similarity_matrices)):
-#         fused_sim += weights[i] * similarity_matrices[i]
-#     print(f"Fused similarity matrix shape: {fused_sim.shape}")
-#
-#     return fused_sim
-def perform_feature_fusion(train_indices, similarity_matrices, ideal_kernel_values, lambd=0.8, matrix_type='DSE_drug'):
-    """
-    Perform feature fusion (CKA-MKL) for a given set of similarity matrices based on the training indices.
-
-    Parameters:
-    - train_indices (list of int): Indices of the training samples (药物或副作用索引，已减去标签偏移)。
-    - similarity_matrices (list of numpy arrays): List of similarity matrices to be fused。
-    - ideal_kernel_values (numpy array): Ideal kernel matrix for fusion。
-    - lambd (float): Regularization parameter。
-    - matrix_type (str): "DSE_drug" 表示药物相似度矩阵，"side" 表示副作用相似度矩阵。
-
-    Returns:
-    - fused_sim (numpy array): Fused similarity matrix with the same shape as the input matrices。
-    """
+def perform_feature_fusion(train_indices, similarity_matrices, ideal_kernel_values, lambd=0.8, matrix_type='drug'):
     print(f"Performing feature fusion for {len(train_indices)} indices")
     print(f"Ideal kernel shape: {ideal_kernel_values.shape}")
     print(f"Train indices: {train_indices[:5]} ...")  # 打印前5个索引
 
     # 检查并过滤掉超过矩阵大小的非法索引
-    if matrix_type == 'DSE_drug':
-        max_size = ideal_kernel_values.shape[0]  # 药物维度是750
+    if matrix_type == 'drug':
+        max_size = ideal_kernel_values.shape[0]
     else:
-        max_size = ideal_kernel_values.shape[1]  # 副作用维度是994
+        max_size = ideal_kernel_values.shape[1]
 
     valid_train_indices = [i for i in train_indices if i < max_size]#过滤掉超过矩阵大小的非法索引
 
