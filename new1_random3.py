@@ -32,14 +32,8 @@ def generate_balanced_kfold_masks(DAL, n_splits=10):
         for i, j in train_pos:
             train_mask[i, j] = True
 
-        # 2. 添加剩余一折所在行的零条目（额外负样本）
-        test_pos_rows = set(i for i, j in test_pos)  # 剩余一折正样本的行号
-        extra_neg = [(i, j) for i in test_pos_rows for j in range(DAL.shape[1]) if DAL[i, j] == 0]
-
-        # 3. 添加所有原始零条目
+        # 2. 添加所有原始零条目
         for i, j in negative_samples:
-            train_mask[i, j] = True
-        for i, j in extra_neg:
             train_mask[i, j] = True
 
         # --- 测试集掩码 ---
