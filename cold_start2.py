@@ -138,7 +138,6 @@ if __name__ == "__main__":
                         lr=args.lr, wd=args.wd, epochs=args.epochs, device=args.device).to(args.device)
 
         true_data, predict_data, auc_data, aupr_data = opt()
-        # true_data, predict_data, auc_data, aupr_data, rmse_data, mae_data = opt()
 
 
         true_datas = true_datas.append(translate_result(true_data))

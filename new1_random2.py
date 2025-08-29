@@ -57,10 +57,10 @@ def generate_balanced_kfold_masks(DAL, n_splits=10):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run drugFreq Hot Start Experiment")
     parser.add_argument('-device', type=str, default="cuda:0", help='cuda:number or cpu')
-    parser.add_argument('--lr', type=float, default=0.00001, help="the learning rate")#0.00002
+    parser.add_argument('--lr', type=float, default=0.00001, help="the learning rate")
     parser.add_argument('--wd', type=float, default=1e-5, help="the weight decay for l2 normalization")
     parser.add_argument('--layer_size', nargs='*', type=int, default=[1024, 3072], help='Output sizes of every layer')
-    parser.add_argument('--alpha', type=float, default=0.4, help="the scale for balance gcn and ni")#0.25
+    parser.add_argument('--alpha', type=float, default=0.4, help="the scale for balance gcn and ni")
     parser.add_argument('--gamma', type=float, default=8, help="the scale for sigmoid")
     parser.add_argument('--epochs', type=int, default=3000, help="the epochs for model")
     args = parser.parse_args()

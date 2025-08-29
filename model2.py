@@ -14,7 +14,7 @@ class ConstructAdjMatrix(nn.Module, ABC):
         self.device = device
         self.adj = torch.where(original_adj_mat > 0, torch.tensor(1.0, device=device), torch.tensor(0.0, device=device))
         self.adj = self.adj.float()
-        # self.adj = original_adj_mat.to(self.device).float()  # 转换为 float32
+
 
     def forward(self):
         d_x = torch.diag(torch.pow(torch.sum(self.adj, dim=1) + 1, -0.5))#得到每个节点的出度，一步归一化并构建归一化对角矩阵 d_x
