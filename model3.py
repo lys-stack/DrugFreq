@@ -132,10 +132,7 @@ class Optimizer(nn.Module, ABC):
     def forward(self):
         for epoch in torch.arange(self.epochs):
             true_data = torch.masked_select(self.adj, self.train_mask).long()#从总的交互矩阵中根据掩码获得训练数据
-            true_data_label = torch.where(true_data > 0, torch.tensor(1, device=true_data.device), true_data)
             best_predict = 0
-            best_auc = 0
-            best_aupr = 0
             best_rmse = float('inf')
             best_mae = float('inf')
             # print(epoch.item())
@@ -158,15 +155,6 @@ class Optimizer(nn.Module, ABC):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
-            predict_data_masked = torch.masked_select(predict_data, self.train_mask)#获取掩码为True的预测结果（根据训练掩码筛选出预测数据中用于训练的数据）
-
-            auc = self.ap_fun(true_data_label, predict_data_masked)
-
-            if auc > best_auc:
-                best_auc = auc
-                best_predict = torch.masked_select(predict_data, self.test_mask)
-
             if epoch % self.test_freq == 0:
                 print(f"epoch:{epoch.item():4d} loss:{loss.item():.6f}")
         with torch.no_grad():
@@ -179,16 +167,8 @@ class Optimizer(nn.Module, ABC):
             # 根据索引提取元素
             row_indices, col_indices = indices  # 分别是行索引和列索引
             true_test_data = self.adj[row_indices, col_indices].long()
-            test_mask_np = self.test_mask.cpu().numpy()
-
-            # 将 true_test_data 转换为 NumPy 数组
-            true_test_data_np = true_test_data.cpu().numpy()
-
-            has_positive = (true_test_data > 0).sum().item() > 0
             num_true = self.test_mask.sum().item()
             print(num_true)
-
-            true_data_label = torch.where(true_test_data > 0, torch.tensor(1, device=true_test_data.device), true_test_data)
             predict_data_masked = torch.masked_select(predict_data, self.test_mask)
             non_zero_indices = torch.nonzero(true_test_data, as_tuple=True)  # 获取所有非零标签的索引
 

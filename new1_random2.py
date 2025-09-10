@@ -25,7 +25,6 @@ def generate_balanced_kfold_masks(DAL, n_splits=10):
         train_mask = np.zeros_like(DAL, dtype=bool)
         test_mask = np.zeros_like(DAL, dtype=bool)
 
-        # 正样本划分
         train_pos = positive_samples[train_idx]  # 九折正样本
         test_pos = positive_samples[test_idx]    # 剩余一折正样本
 

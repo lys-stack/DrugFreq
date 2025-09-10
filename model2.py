@@ -146,9 +146,6 @@ class Optimizer(nn.Module, ABC):
 
             predict_data_masked = torch.masked_select(predict_data, self.train_mask)#获取掩码为True的预测结果（根据训练掩码筛选出预测数据中用于训练的数据）
             auc = self.ap_fun(true_data_label, predict_data_masked)
-            if auc > best_auc:
-                best_auc = auc
-                best_predict = torch.masked_select(predict_data, self.test_mask)
             if epoch % self.test_freq == 0:
                 print(f"epoch:{epoch.item():4d} loss:{loss.item():.6f} auc:{auc:.4f} ")
         with torch.no_grad():
@@ -163,8 +160,6 @@ class Optimizer(nn.Module, ABC):
             row_indices, col_indices = indices  # 分别是行索引和列索引
             true_test_data = self.adj[row_indices, col_indices].long()
 
-
-            has_positive = (true_test_data > 0).sum().item() > 0
             num_true = self.test_mask.sum().item()
             print(num_true)
 

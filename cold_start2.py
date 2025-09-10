@@ -11,13 +11,15 @@ import numpy as np
 
 
 
-def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10):
+def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, similarity_threshold=0.6, similarity_matrix_path="./Data/drug/664_drug_fingerprint_jaccard_similarity_matrix_new.csv"):
+    similarity_matrix = pd.read_csv(similarity_matrix_path, header=None)
+    similarity_matrix = similarity_matrix.apply(pd.to_numeric, errors='coerce').to_numpy()
+
     mask_matrices = []
     indices = np.arange(total_rows)
-    np.random.shuffle(indices)  # 打乱索引
+    np.random.shuffle(indices)
 
-    # 分割成 n_splits 组
-    fold_sizes = [total_rows // n_splits] * n_splits# 计算每一折的大小
+    fold_sizes = [total_rows // n_splits] * n_splits
     for i in range(total_rows % n_splits):
         fold_sizes[i] += 1
 
@@ -25,13 +27,22 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10):
     for fold_size in fold_sizes:
         end = start + fold_size
 
-        # 初始化一个全训练集掩码
         mask = np.ones((total_rows, total_cols), dtype=bool)
-        test_indices = indices[start:end]# 取出当前折的测试集索引
-        mask[test_indices, :] = False# 将这些行设置为 False，表示测试集
-        mask_matrices.append(mask)# 加入掩码矩阵
-        start = end
+        test_indices = indices[start:end]
+        mask[test_indices, :] = False
 
+        train_indices = np.setdiff1d(indices, test_indices)
+        test_indices_to_remove = []
+
+        for test_idx in test_indices:
+            for train_idx in train_indices:
+                if similarity_matrix[test_idx, train_idx] > similarity_threshold:
+                    test_indices_to_remove.append(test_idx)
+                    break
+
+        mask[test_indices_to_remove, :] = True
+        mask_matrices.append(mask)
+        start = end
     return mask_matrices
 
 
@@ -107,7 +118,7 @@ if __name__ == "__main__":
         train_mask = mask
         test_mask = ~mask
 
-        print("test_mask", test_mask)  # [750,994]
+        print("test_mask", test_mask)
 
         # 转换为 PyTorch 张量并移动到设备
         train_mask_tensor = torch.tensor(train_mask, dtype=torch.bool).to(args.device)
