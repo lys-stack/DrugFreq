@@ -12,18 +12,15 @@ import numpy as np
 
 
 def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, similarity_threshold=0.6, similarity_matrix_path="./Data/drug/664_drug_fingerprint_jaccard_similarity_matrix_new.csv"):
-    # 读取相似性矩阵，并确保转换为数值型
     similarity_matrix = pd.read_csv(similarity_matrix_path, header=None)
-
-    # 强制将数据转换为浮动类型
     similarity_matrix = similarity_matrix.apply(pd.to_numeric, errors='coerce').to_numpy()
 
     mask_matrices = []
     indices = np.arange(total_rows)
-    np.random.shuffle(indices)  # 打乱索引
+    np.random.shuffle(indices)
 
     # 分割成 n_splits 组
-    fold_sizes = [total_rows // n_splits] * n_splits  # 计算每一折的大小
+    fold_sizes = [total_rows // n_splits] * n_splits
     for i in range(total_rows % n_splits):
         fold_sizes[i] += 1
 
@@ -50,7 +47,6 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
                 test_drugs_final.append(test_idx)
 
         test_drugs_final = np.array(test_drugs_final)
-        # 打印统计信息
         print(f"Fold 训练集药物数：{len(train_drugs)}, 测试集药物数：{len(test_drugs_final)}, 移除药物数：{len(removed_drugs)}")
         mask[train_drugs, :] = True
         if len(test_drugs_final) > 0:

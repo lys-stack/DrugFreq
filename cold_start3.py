@@ -18,6 +18,7 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
     indices = np.arange(total_rows)
     np.random.shuffle(indices)
 
+    # 分割成 n_splits 组
     fold_sizes = [total_rows // n_splits] * n_splits
     for i in range(total_rows % n_splits):
         fold_sizes[i] += 1
@@ -25,23 +26,32 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
     start = 0
     for fold_size in fold_sizes:
         end = start + fold_size
-        mask = np.ones((total_rows, total_cols), dtype=bool)
-        test_indices = indices[start:end]
-        mask[test_indices, :] = False
+        mask = np.zeros((total_rows, total_cols), dtype=bool)
+        current_fold_drugs = indices[start:end]
+        train_drugs = np.setdiff1d(indices, current_fold_drugs)
+        test_drugs_candidate = current_fold_drugs
+        test_drugs_final = []
+        removed_drugs = []
 
-        train_indices = np.setdiff1d(indices, test_indices)
-        test_indices_to_remove = []
-
-        for test_idx in test_indices:
-            for train_idx in train_indices:
+        for test_idx in test_drugs_candidate:
+            is_too_similar = False
+            for train_idx in train_drugs:
                 if similarity_matrix[test_idx, train_idx] > similarity_threshold:
-                    test_indices_to_remove.append(test_idx)
+                    is_too_similar = True
                     break
 
-        mask[test_indices_to_remove, :] = True
+            if is_too_similar:
+              removed_drugs.append(test_idx)
+            else:
+                test_drugs_final.append(test_idx)
+
+        test_drugs_final = np.array(test_drugs_final)
+        print(f"Fold 训练集药物数：{len(train_drugs)}, 测试集药物数：{len(test_drugs_final)}, 移除药物数：{len(removed_drugs)}")
+        mask[train_drugs, :] = True
+        if len(test_drugs_final) > 0:
+            mask[test_drugs_final, :] = False
         mask_matrices.append(mask)
         start = end
-
     return mask_matrices
 
 
