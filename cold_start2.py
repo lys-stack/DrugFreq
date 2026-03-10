@@ -12,35 +12,49 @@ import numpy as np
 
 
 def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, similarity_threshold=0.6, similarity_matrix_path="./Data/drug/664_drug_fingerprint_jaccard_similarity_matrix_new.csv"):
+    # 读取相似性矩阵，并确保转换为数值型
     similarity_matrix = pd.read_csv(similarity_matrix_path, header=None)
+
+    # 强制将数据转换为浮动类型
     similarity_matrix = similarity_matrix.apply(pd.to_numeric, errors='coerce').to_numpy()
 
     mask_matrices = []
     indices = np.arange(total_rows)
-    np.random.shuffle(indices)
+    np.random.shuffle(indices)  # 打乱索引
 
-    fold_sizes = [total_rows // n_splits] * n_splits
+    # 分割成 n_splits 组
+    fold_sizes = [total_rows // n_splits] * n_splits  # 计算每一折的大小
     for i in range(total_rows % n_splits):
         fold_sizes[i] += 1
 
     start = 0
     for fold_size in fold_sizes:
         end = start + fold_size
+        mask = np.zeros((total_rows, total_cols), dtype=bool)
+        current_fold_drugs = indices[start:end]
+        train_drugs = np.setdiff1d(indices, current_fold_drugs)
+        test_drugs_candidate = current_fold_drugs
+        test_drugs_final = []
+        removed_drugs = []
 
-        mask = np.ones((total_rows, total_cols), dtype=bool)
-        test_indices = indices[start:end]
-        mask[test_indices, :] = False
-
-        train_indices = np.setdiff1d(indices, test_indices)
-        test_indices_to_remove = []
-
-        for test_idx in test_indices:
-            for train_idx in train_indices:
+        for test_idx in test_drugs_candidate:
+            is_too_similar = False
+            for train_idx in train_drugs:
                 if similarity_matrix[test_idx, train_idx] > similarity_threshold:
-                    test_indices_to_remove.append(test_idx)
+                    is_too_similar = True
                     break
 
-        mask[test_indices_to_remove, :] = True
+            if is_too_similar:
+              removed_drugs.append(test_idx)
+            else:
+                test_drugs_final.append(test_idx)
+
+        test_drugs_final = np.array(test_drugs_final)
+        # 打印统计信息
+        print(f"Fold 训练集药物数：{len(train_drugs)}, 测试集药物数：{len(test_drugs_final)}, 移除药物数：{len(removed_drugs)}")
+        mask[train_drugs, :] = True
+        if len(test_drugs_final) > 0:
+            mask[test_drugs_final, :] = False
         mask_matrices.append(mask)
         start = end
     return mask_matrices
