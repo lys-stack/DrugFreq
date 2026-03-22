@@ -16,10 +16,10 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
     similarity_matrix = similarity_matrix.apply(pd.to_numeric, errors='coerce').to_numpy()
 
     mask_matrices = []
+    removed_drug_records = []
     indices = np.arange(total_rows)
     np.random.shuffle(indices)
 
-    # 分割成 n_splits 组
     fold_sizes = [total_rows // n_splits] * n_splits
     for i in range(total_rows % n_splits):
         fold_sizes[i] += 1
@@ -33,6 +33,7 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
         test_drugs_candidate = current_fold_drugs
         test_drugs_final = []
         removed_drugs = []
+
 
         for test_idx in test_drugs_candidate:
             is_too_similar = False
@@ -52,8 +53,9 @@ def generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10, s
         if len(test_drugs_final) > 0:
             mask[test_drugs_final, :] = False
         mask_matrices.append(mask)
+        removed_drug_records.append(set(removed_drugs))
         start = end
-    return mask_matrices
+    return mask_matrices,removed_drug_records
 
 
 
@@ -110,8 +112,6 @@ if __name__ == "__main__":
         ideal_kernel_sides = np.dot(ideal_kernel_values_masked.T, ideal_kernel_values_masked)
         ideal_kernel_sides = kernel_normalized(ideal_kernel_sides)
 
-
-
         # 特征融合
         fused_drug_sim = perform_feature_fusion(
             np.arange(ideal_kernel_values_masked.shape[0]), drug_similarity_matrices, ideal_kernel_drugs, lambd=0.8,
@@ -127,10 +127,19 @@ if __name__ == "__main__":
 
         train_mask = mask
         test_mask = ~mask
+        real_test_mask = test_mask.copy()
+        for removed_idx in removed_drug_records[fold_idx]:
+            real_test_mask[removed_idx, :] = False
+
+        test_mask = real_test_mask
+        num_train = np.sum(train_mask[:, 0])
+        num_test = np.sum(test_mask[:, 0])
+        num_removed = len(removed_drug_records[fold_idx])
+        print(f"Fold {fold_idx + 1}: 训练集={num_train}, 测试集={num_test}, 被剔除={num_removed}")
+        print(f"  验证：{num_train} + {num_test} + {num_removed} = {num_train + num_test + num_removed} (应该=664)")
 
         print("test_mask", test_mask)
 
-        # 转换为 PyTorch 张量并移动到设备
         train_mask_tensor = torch.tensor(train_mask, dtype=torch.bool).to(args.device)
         test_mask_tensor = torch.tensor(test_mask, dtype=torch.bool).to(args.device)
         num_true_train_mask = torch.sum(train_mask_tensor).item()
