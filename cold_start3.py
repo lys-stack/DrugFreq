@@ -87,7 +87,7 @@ if __name__ == "__main__":
     ]
 
     # 生成掩码矩阵
-    mask_matrices = generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10)
+    mask_matrices ,removed_drug_records= generate_balanced_kfold_masks(total_rows=664, total_cols=994, n_splits=10)
     true_datas = pd.DataFrame()
     predict_datas = pd.DataFrame()
 
